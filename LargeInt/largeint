@@ -1,3 +1,4 @@
+// -*- C++ -*-
 #pragma once
 #ifndef _LARGEINT_
 #define _LARGEINT_
