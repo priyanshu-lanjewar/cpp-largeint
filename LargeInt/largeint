@@ -1,0 +1,164 @@
+#pragma once
+#ifndef _LARGEINT_
+#define _LARGEINT_
+#ifndef _IOSTREAM_
+#include "iostream"
+#endif // !_IOSTREAM_
+#ifndef _VECTOR
+#include "vector"
+#endif // !_VECTOR
+
+
+class digit {
+	private:
+		short int val;
+		bool carry_generated = false;
+	public:
+		short int set(int val);
+		digit(int val=0);
+		int operator=(int i);
+		int operator++(int);
+		bool operator==(int i);
+		bool operator!=(int i);
+		operator int();
+		friend std::ostream& operator<<(std::ostream& os, const digit& d);
+		friend class largeint;
+};
+
+std::ostream& operator<<(std::ostream& os, const digit& d)
+{
+	os << d.val;
+	return os;
+}
+digit::operator int() {
+	return val;
+}
+int digit::operator=(int i) {
+	set(i);
+	return i;
+}
+int digit::operator++(int) {
+	int v = val;
+	if (val == 9) {
+		val = 0;
+		carry_generated = true;
+	}
+	else val++;
+	return v;
+}
+bool digit::operator==(int i){
+	return this->val == i;
+}
+bool digit::operator!=(int i) {
+	return this->val != i;
+}
+short int digit::set(int val) {
+	if (val < 0 || val>9)
+		throw std::range_error("Value Out of Range");
+	else
+		this->val = val;
+	return val;
+}
+digit::digit(int val) :val{ set(val) } {}
+class largeint {
+	private:
+		bool isNeg;
+		std::vector<digit> *n;
+		largeint(std::vector<digit> l);
+	public:
+		std::vector<digit>* set(const char* _num);
+		largeint(const char* num);
+		largeint operator+(largeint l);
+		largeint operator-(largeint l);
+		largeint operator*(largeint l);
+		largeint operator/(largeint l);
+		largeint operator%(largeint l);
+		largeint operator++(int);
+		largeint operator--();
+		largeint operator&(largeint l);
+		largeint operator|(largeint l);
+		largeint operator^(largeint l);
+		largeint operator!();
+
+		friend std::istream& operator>>(std::istream& is, largeint& l);
+		friend std::ostream& operator<<(std::ostream& os, const largeint& l);
+};
+
+largeint::largeint(std::vector<digit> l) {
+	n = new std::vector<digit>(l);
+}
+
+std::vector<digit>* largeint::set(const char* _num) {
+	bool begZ = true;
+	n = new std::vector<digit>();
+	int i, j;
+	j = i = _num[0] == '-' ? 1 : 0;
+	isNeg = i;
+	for (i = _num[0] == '-' ? 1 : 0; *(_num + i) != '\0'; i++, j++) {
+		if (!(_num[i] == '0' && begZ)) {
+			begZ = false;
+			char c = _num[j];
+			int m = c == '0' ? 0 : c == '1' ? 1 : c == '2' ? 2 : c == '3' ? 3 : c == '4' ? 4 : c == '5' ? 5 : c == '6' ? 6 : c == '7' ? 7 : c == '8' ? 8 : c == '9' ? 9 : -1;
+			if(m==-1)
+				throw std::invalid_argument("Only Numeric String Accepted.\n");
+			n->push_back(m);
+		}
+	}
+	if (begZ) n->push_back(0);
+	return n;
+}
+largeint::largeint(const char* num) :n{ set(num) } {}
+
+std::istream& operator>>(std::istream& is, largeint& l) {
+	char* in=new char[1000];
+	is >> in;
+	l.set(in);
+	return is;
+}
+std::ostream& operator<<(std::ostream& os, const largeint& l)
+{
+	if (l.isNeg) {
+		os << '-';
+	}
+	std::vector<digit>::iterator i;
+	for (i = l.n->begin(); i < l.n->end(); i++) {
+		os << *i;
+	}
+	return os;
+}
+
+largeint largeint::operator++(int) {
+	largeint l(*n);
+	size_t s = n->size();
+	int x = n->at(s-1);
+	x++;
+	int c = x/10;
+	x = x % 10;
+	n->at(s - 1) = x;
+	for (int i = s - 2; i >= 0; i--) {
+		if (c) {
+			x = n->at(i);
+			x++;
+			int c = x / 10;
+			x = x % 10;
+			n->at(i) = x;
+		}
+	}
+	if (c) n->insert(n->begin(), 1);
+	return l;
+}
+
+largeint largeint::operator!()
+{
+	std::vector<digit>::iterator i;
+	for (i=n->begin(); i < n->end(); i++) {
+		if (*i != 0) {
+			return largeint("0");
+		}
+	}
+	return largeint("1");
+}
+
+
+
+#endif // !_LARGEINT_
